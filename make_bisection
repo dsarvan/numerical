@@ -21,16 +21,16 @@ SHELL=/bin/bash
 #        "make -f make_program tarz"
  
 SRCS= \
-problem.c 
+bisection.c 
   
 OBJS= \
-problem.o 
+bisection.o 
 
 HDRS= 
 
-MAKEFILE= make_problem
+MAKEFILE= make_bisection
 
-COMMAND=  problem
+COMMAND=  bisection
  
 CC= gcc
 CFLAGS=  -g
@@ -43,8 +43,8 @@ LDFLAGS= -lm
 $(COMMAND): $(OBJS) 
 	$(CC) -o $(COMMAND) $(OBJS) $(LDFLAGS) $(LIBS)
                  
-problem.o : problem.c 
-	$(CC) $(CFLAGS) $(WARNFLAGS)  -c problem.c -o problem.o
+bisection.o : bisection.c 
+	$(CC) $(CFLAGS) $(WARNFLAGS)  -c bisection.c -o bisection.o
  
  
 clean:

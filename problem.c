@@ -1,118 +1,176 @@
-/* File: problem.c
-   Programmer: D.Saravanan  ph15m015@smail.iitm.ac.in
-   Date: 20 March 2018
-   Version: Original
-   Comments: C code to solve Schrodinger equation in momentum space
+/*File: problem.c
+  Programmer: D.Saravanan    ph15m015@smail.iitm.ac.in
+  Date: 13 March 2018
+  Version: Original
+  Comments: C code to obtain the binding energy of a deuteron 
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
 
-int main(void) {
+#define EPSILON 1.E-10   /* tolerance value */
+#define MAX_ITR 1000     /* maximum no. of iterations */
 
-	FILE *mesh_ptr;
-	FILE *pot_ptr;
+/* function prototypes */
+double f(double E);
+double df(double E);
+void bisection(double E1, double E2);
+void newton(double E1, double E2); 
+void secant(double E1, double E2);
 
-	int i, j;
-	int n, m, Nkmax;
-	double M;
-	const double pi = 4.*atan(1.);
-	const double h = 197.32705;
-
-	double kdum, kpdum;
-	double k[54], w[54];
-	double V[54][54];
-	char line[125];
-
-	/* Matrix and its decompositions */
-	gsl_matrix *H;
-	gsl_vector *eval;
-	gsl_matrix *evec;
-
-	/* Workspace */
-	gsl_eigen_symmv_workspace *wkr; 
-
-	mesh_ptr = fopen("kmesh_wts.dat", "r");
-
-	n = 0;
-
-	while(fgets(line, sizeof(line), mesh_ptr) != NULL) {
-		sscanf(line, "%lf %lf", &k[n], &w[n]);
-		n ++;
-	}
-
-	Nkmax = n;
-
-	fclose(mesh_ptr);
-
-	pot_ptr = fopen("matrix_elements.dat", "r");
-
-	fgets(line, sizeof(line), pot_ptr);
-	fgets(line, sizeof(line), pot_ptr);
-	fgets(line, sizeof(line), pot_ptr);
-
-	n = 0;
-	m = 0;
-
-	while(fgets(line, sizeof(line), pot_ptr) != NULL) {
-		sscanf(line, "%lf %lf %lf", &kdum, &kpdum, &V[n][m]);
-		m ++;
-		if(m == Nkmax) {
-			n ++;
-			m = 0;
-		}
-     	}
-
-	fclose(pot_ptr);
-
-	/* Initialize matirx H{i,j} */
-	H = gsl_matrix_alloc (54, 54);
-
-	for(i=0; i<54; i++) {
-		for(j=0; j<54; j++) {
-			if(i==j)
-				M = ((k[j]*k[j])/2. + 2./pi * k[i] * sqrt(w[i]) * V[i][j] * k[j] * sqrt(w[j])) * h;
-			else
-				M = 2./pi * k[i] * sqrt(w[i]) * V[i][j] * k[j] * sqrt(w[j]) * h;
-			gsl_matrix_set (H, i, j, M);
-		}
-	}
-
-	/* Print matrix H */
-	/*for(i=0; i<54; i++) {
-		for(j=0; j<54; j++) {
-			if(i==j)
-				printf("H(%d,%d) = %g\n", i, j, gsl_matrix_get (H, i, j));
-		}
-	}*/
+/* function */
+double f(double E) {
 	
-	/* Compute eigendecomposition */	
-	eval = gsl_vector_alloc (54);
-	evec = gsl_matrix_alloc (54, 54);
+	double V0, a, m, h;
+	double k, B;
 
-	/* Workspace */
-	wkr = gsl_eigen_symmv_alloc (54);
-	gsl_eigen_symmv (H, eval, evec, wkr);
+	V0 = 60.;                   /* V0 = 60 MeV */
+	a = 1.45E-15;               /* a = 1.45 fm */
+	m = 938.;                   /* mc^2 = 938 MeV */
+	h = 2.E-13;               /* hc = 200 MeV fm */
 
-	gsl_eigen_symmv_sort (eval, evec, GSL_EIGEN_SORT_ABS_ASC);
+	k = sqrt(m * (V0 - fabs(E)))/h;
+	B = sqrt(m * fabs(E))/h;
 
-	/* Sort and print eigenvalues */
-   	for (i=0; i<54; i++) {
-        	double eval_i = gsl_vector_get (eval, i);
-		printf ("eigenvalue = %g\n", eval_i);
+	return k * (cos(k*a)/sin(k*a)) + B;
+}
+
+/* derivative */
+double df(double E) {
+	
+	double V0, a, m, h;
+	double k;
+
+	V0 = 60.;                  /* V0 = 60 MeV */
+	a = 1.45E-15;              /* a = 1.45 fm */
+	m = 938.;          	   /* mc^2 = 938 MeV */
+	h = 2.E-13;              /* hc = 200 MeV fm */
+
+	k = sqrt(m * (V0 - fabs(E)))/h;
+
+	return sqrt(m/(4*h*h*E)) * (a*a*k*(1./sin(a*k))*(1./sin(a*k)) - (cos(k*a)/sin(k*a)) + 1);
+} 
+
+/* Bisection Method */
+void bisection(double E1, double E2) {
+	
+	double E, fE1, fE2, fE;
+	int itr;
+
+	itr = 0;
+
+	do {
+		fE1 = f(E1);
+		fE2 = f(E2);
+		E = (E1+E2)/2;
+		fE = f(E);
+	
+		if(fE1 * fE < 0  && fE2 * fE > 0) {
+			E2 = E;
+			fE2 = fE;
+		}
+
+		else {
+			E1 = E;
+			fE1 = fE;
+		}
+	
+		itr ++;
+	
+	} while(fabs(f(E)) > EPSILON && itr <= MAX_ITR);
+
+	printf("\nBisection Method:\n");
+
+	if(fabs(f(E)) <= EPSILON)
+		printf("The binding energy of the deuteron |E| is %f MeV\n", E);
+	else
+		printf("Error, no convergence.\n");
+
+	printf("No. of iterations: %d\n\n", itr);
+
+}
+
+/* Newton-Raphson Method */
+void newton(double E1, double E2) {
+
+	double E, E3 = (E1+E2)/2;
+	int itr;
+
+	itr = 0;
+
+	do {
+	
+		E = E3 - f(E3)/df(E3);
+
+		E3 = E;
+	
+		itr ++;
+	
+	} while(fabs(f(E)) > EPSILON && itr <= MAX_ITR);
+
+	printf("\nNewton-Raphson Method:\n");
+	
+	if(fabs(f(E)) <= EPSILON)
+		printf("The binding energy of the deuteron |E| is %f MeV\n", E);
+	else 
+		printf("Error, no convergence.\n");
+
+	printf("No. of iterations: %d\n\n", itr);
+
+}
+
+/* Secant Method */
+void secant(double E1, double E2) {
+
+	double E;
+	double fE1, fE2;
+	int itr;
+
+	itr = 0;
+
+	do {
+		
+		fE1 = f(E1);
+		fE2 = f(E2);
+
+		E = (fE2 * E1 - fE1 * E2)/(fE2 - fE1);
+
+		E1 = E2;
+		E2 = E;
+
+		itr ++;
+
+	} while (fabs(f(E)) > EPSILON && itr <= MAX_ITR);
+
+	printf("\nSecant Method:\n");
+
+	if(fabs(f(E)) <= EPSILON)
+		printf("The binding energy of the deuteron |E| is %f MeV\n", E);
+	else
+		printf("Error, no convergence.\n");
+
+	printf("No. of iterations: %d\n\n", itr);
+
+}
+
+/* main function */
+int main(void) {
+	
+	double E1, E2;
+
+	E1 = 0.8;
+	E2 = 1.2;
+
+	if(f(E1)*f(E2) < 0) {
+
+		bisection(E1, E2);
+		newton(E1, E2);
+		secant(E1, E2);
 	}
 
-
-	/* Clean up */	
-	gsl_eigen_symmv_free (wkr);
-	gsl_vector_free (eval);
-	gsl_matrix_free (evec);
-	gsl_matrix_free (H);
+	else
+		printf("Error, root not in interval.\n");
 
 	return 0;
 

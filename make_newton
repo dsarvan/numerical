@@ -21,16 +21,16 @@ SHELL=/bin/bash
 #        "make -f make_program tarz"
  
 SRCS= \
-problem.c 
+newton.c 
   
 OBJS= \
-problem.o 
+newton.o 
 
 HDRS= 
 
-MAKEFILE= make_problem
+MAKEFILE= make_newton
 
-COMMAND=  problem
+COMMAND=  newton
  
 CC= gcc
 CFLAGS=  -g
@@ -43,8 +43,8 @@ LDFLAGS= -lm
 $(COMMAND): $(OBJS) 
 	$(CC) -o $(COMMAND) $(OBJS) $(LDFLAGS) $(LIBS)
                  
-problem.o : problem.c 
-	$(CC) $(CFLAGS) $(WARNFLAGS)  -c problem.c -o problem.o
+newton.o : newton.c 
+	$(CC) $(CFLAGS) $(WARNFLAGS)  -c newton.c -o newton.o
  
  
 clean:

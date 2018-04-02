@@ -21,16 +21,16 @@ SHELL=/bin/bash
 #        "make -f make_program tarz"
  
 SRCS= \
-problem.c 
+secant.c 
   
 OBJS= \
-problem.o 
+secant.o 
 
 HDRS= 
 
-MAKEFILE= make_problem
+MAKEFILE= make_secant
 
-COMMAND=  problem
+COMMAND=  secant
  
 CC= gcc
 CFLAGS=  -g
@@ -43,8 +43,8 @@ LDFLAGS= -lm
 $(COMMAND): $(OBJS) 
 	$(CC) -o $(COMMAND) $(OBJS) $(LDFLAGS) $(LIBS)
                  
-problem.o : problem.c 
-	$(CC) $(CFLAGS) $(WARNFLAGS)  -c problem.c -o problem.o
+secant.o : secant.c 
+	$(CC) $(CFLAGS) $(WARNFLAGS)  -c secant.c -o secant.o
  
  
 clean:
