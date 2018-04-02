@@ -33,12 +33,12 @@ MAKEFILE= make_problem
 COMMAND=  problem
  
 CC= gcc
-CFLAGS=  -g
+CFLAGS=  -g -pg
 WARNFLAGS= -ansi -pedantic -Werror -Wall -W \
    -Wmissing-prototypes -Wstrict-prototypes \
    -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align \
    -Wwrite-strings -fno-common -Wnested-externs
-LDFLAGS= -lm
+LDFLAGS= -lgsl -lgslcblas -lm
 
 $(COMMAND): $(OBJS) 
 	$(CC) -o $(COMMAND) $(OBJS) $(LDFLAGS) $(LIBS)
