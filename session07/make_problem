@@ -1,0 +1,56 @@
+SHELL=/bin/bash
+
+# This file contains a set of rules used by the "make"
+#   command.  This makefile $(MAKEFILE) tells "make" how the
+#   executable program $(COMMAND) should be created
+#   from the source files $(SRCS) via the object
+#   files $(OBJS) and the header files $(HDRS); type the command:
+#        "make -f make_program"
+#   where make_program should be replaced by the name of
+#   the makefile.
+# 
+# This file also tells make what to do if arguments
+#   follow the "make" command.
+#
+# To remove the OBJS files; type the command:
+#        "make -f make_program clean"
+#
+# To create a gzipped tar file with name $(COMMAND).tar.gz
+#  containing this makefile and the SRCS files,
+#  type the command:
+#        "make -f make_program tarz"
+ 
+SRCS= \
+problem.c 
+  
+OBJS= \
+problem.o 
+
+HDRS= 
+
+MAKEFILE= make_problem
+
+COMMAND=  problem
+ 
+CC= gcc
+CFLAGS=  -g -pg
+WARNFLAGS= -ansi -pedantic -Werror -Wall -W \
+   -Wmissing-prototypes -Wstrict-prototypes \
+   -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align \
+   -Wwrite-strings -fno-common -Wnested-externs
+LDFLAGS= -lgsl -lgslcblas -lm
+
+$(COMMAND): $(OBJS) 
+	$(CC) -o $(COMMAND) $(OBJS) $(LDFLAGS) $(LIBS)
+                 
+problem.o : problem.c 
+	$(CC) $(CFLAGS) $(WARNFLAGS)  -c problem.c -o problem.o
+ 
+ 
+clean:
+	rm -f $(OBJS)
+ 
+tarz:
+	tar zcf - $(MAKEFILE) $(SRCS) $(HDRS) > $(COMMAND).tar.gz
+ 
+
